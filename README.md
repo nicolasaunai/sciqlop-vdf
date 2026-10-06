@@ -15,14 +15,59 @@ field-aligned, optionally in the plasma bulk frame.
 
 ## Install
 
-In a SciQLop workspace (SciQLop ≥ 0.14), install the package with SciQLop's package installer so it is
-recorded in the workspace manifest, e.g. from a notebook cell or the agent:
+**Requirements:** SciQLop ≥ 0.14 (tested with 0.14.0) · `git` on the PATH (the package is fetched from GitHub)
+· network access to github.com, and to CDAWeb for the data.
 
-```
-sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf
-```
+SciQLop plugins are installed **per workspace**: each workspace has its own Python environment and a manifest
+(`workspace.sciqlop`) listing its packages. Install through SciQLop so the package is recorded there; a plain
+`pip install` is not recorded and disappears when SciQLop rebuilds the environment.
 
-Restart SciQLop: every panel gets a **VDF ▾** button.
+1. Start SciQLop and open the workspace you want the plugin in.
+2. Open a notebook (or the IPython console) **in that workspace** and run — the quotes are required:
+
+   ```
+   %install "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0"
+   ```
+
+   Expected output: `Installed and recorded: sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0`.
+   Drop `@v0.2.0` to follow the latest commit on `main` instead of the release.
+3. **Restart SciQLop** (plugins are loaded at start-up).
+4. Check:
+   * `%workspace deps` lists `sciqlop-vdf @ git+…`;
+   * every plot panel has a **VDF ▾** button at the right end of its bottom row; its menu lists the MMS FPI
+     sources and *SolO SWA-PAS (protons)* / *SolO SWA-PAS as He++ (m/q=2)*.
+
+<details>
+<summary>Other ways to install</summary>
+
+* **Python** (same effect as `%install`), in a cell of the workspace:
+
+  ```python
+  from SciQLop.user_api.packages import install_packages
+  install_packages("sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0")
+  ```
+
+* **Manifest by hand**: with SciQLop closed, add the line to the `requires` list of `workspace.sciqlop` in the
+  workspace directory (`%workspace status` prints its path), then start SciQLop; it installs what the manifest lists.
+
+  ```toml
+  [dependencies]
+  requires = [
+      "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0",
+  ]
+  ```
+
+* **Update** to a newer release: run `%install` with the new tag, then restart.
+</details>
+
+## Quick start
+
+* **Interactive:** plot any product on a panel, click **VDF ▾**, pick a source. An orange marker appears at the
+  panel centre: drag it to step through distributions; the control bar above the time axis switches
+  marker ↔ interval (averaging over a draggable blue span), frame (native / RTN or GSE / field-aligned), bulk
+  frame, reduced ↔ slice, grid, |v|max and contours; **×** removes the viewer.
+* **Worked example:** run [`notebooks/solo_2025-02-28_event.ipynb`](notebooks/solo_2025-02-28_event.ipynb) top to
+  bottom (needs ~3 GB of free memory for the Solar Orbiter distributions).
 
 ## Python API
 
