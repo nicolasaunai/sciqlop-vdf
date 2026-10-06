@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sciqlop-vdf"
+version = "0.2.0"
+description = "Velocity distribution function viewer for SciQLop (generic core + MMS FPI and Solar Orbiter SWA-PAS adapters)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Nicolas Aunai" }]
+requires-python = ">=3.12"
+dependencies = ["numpy", "scipy", "speasy", "pycdfpp"]
+
+[project.urls]
+Repository = "https://github.com/nicolasaunai/sciqlop-vdf"
+
+[project.entry-points."sciqlop.plugins"]
+sciqlop_vdf = "sciqlop_vdf.plugin"
+
+[project.entry-points."sciqlop_vdf.sources"]
+mms_fpi = "sciqlop_vdf_mms.sources:register"
+solo_pas = "sciqlop_vdf_solo.sources:register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sciqlop_vdf", "sciqlop_vdf_mms", "sciqlop_vdf_solo"]
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "sciqlop_vdf/**/*.py" }, { file = "sciqlop_vdf_mms/**/*.py" },
+              { file = "sciqlop_vdf_solo/**/*.py" }]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-m 'not network'"
+markers = ["network: needs internet access to CDAWeb through speasy"]

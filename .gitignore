@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+.venv/
+
+# internal development notes (contain local paths)
+.ledger/
+HANDOVER.md
+docs/plan*.md
+notebooks/vdf_dev.ipynb
+notebooks/*.png
