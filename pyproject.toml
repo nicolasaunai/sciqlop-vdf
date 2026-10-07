@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sciqlop-vdf"
-version = "0.2.0"
+version = "0.3.0"
 description = "Velocity distribution function viewer for SciQLop (generic core + MMS FPI and Solar Orbiter SWA-PAS adapters)"
 readme = "README.md"
 license = "MIT"

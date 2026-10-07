@@ -26,11 +26,11 @@ SciQLop plugins are installed **per workspace**: each workspace has its own Pyth
 2. Open a notebook (or the IPython console) **in that workspace** and run — the quotes are required:
 
    ```
-   %install "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0"
+   %install "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.3.0"
    ```
 
-   Expected output: `Installed and recorded: sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0`.
-   Drop `@v0.2.0` to follow the latest commit on `main` instead of the release.
+   Expected output: `Installed and recorded: sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.3.0`.
+   Drop `@v0.3.0` to follow the latest commit on `main` instead of the release.
 3. **Restart SciQLop** (plugins are loaded at start-up).
 4. Check:
    * `%workspace deps` lists `sciqlop-vdf @ git+…`;
@@ -44,7 +44,7 @@ SciQLop plugins are installed **per workspace**: each workspace has its own Pyth
 
   ```python
   from SciQLop.user_api.packages import install_packages
-  install_packages("sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0")
+  install_packages("sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.3.0")
   ```
 
 * **Manifest by hand**: with SciQLop closed, add the line to the `requires` list of `workspace.sciqlop` in the
@@ -53,7 +53,7 @@ SciQLop plugins are installed **per workspace**: each workspace has its own Pyth
   ```toml
   [dependencies]
   requires = [
-      "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.2.0",
+      "sciqlop-vdf @ git+https://github.com/nicolasaunai/sciqlop-vdf@v0.3.0",
   ]
   ```
 
