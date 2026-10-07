@@ -115,3 +115,22 @@ message; display exception → status line error, never a stuck "computing …".
 - Persisting dock layout and options in the workspace.
 - Upstreaming a public docking API to SciQLop.
 - One-count mask vs contour (open item in `HANDOVER.md`).
+
+## 10. Spike results (2026-10-07)
+
+Run in the live SciQLop (Panel0, MMS1 FGM brst, 2017-07-11 22:33–22:35) with three standalone
+`SciQLopMultiPlotPanel(None, synchronize_x=False, synchronize_time=False)` in one `QtAds.CDockWidget`.
+
+| # | Check | Result | Consequence |
+|---|---|---|---|
+| 1 | colormaps + contours in dock | yes | — |
+| 2 | `hide_color_scale()` on XY plot impl | yes | plane 2 keeps the bar |
+| 3 | `splitterSizes` / `setSplitterSizes` 60/40 | yes | [1197, 174] → [823, 548] |
+| 4 | float / tab / re-dock | yes | plots keep rendering |
+| 5 | hidden-axis `Text` title | yes | — |
+| 6 | teardown order (takeWidget → hide → deleteLater → closeDockWidget), floating | yes | no crash, panel alive |
+| 7 | `CustomCloseHandling` + `closeRequested` | yes | × emits, does not close; `closeDockWidget()` closes |
+
+Notes: `QWidget.grab()` returns a stale image of these plots; verify rendering with
+`unwrap(plot._impl).save_png(path)`. Without size control each plane in a row becomes a tall narrow strip
+(confirms the need for `PlaneArea`'s square cells).
