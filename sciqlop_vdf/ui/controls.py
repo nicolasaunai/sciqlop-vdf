@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDoubleSpinBo
                                QWidget, QWidgetAction)
 
 from ..core.pipeline import PAIRS  # plane i: (x axis, y axis, collapsed axis)
+from .flow_layout import FlowLayout
 from .format import parse_readout
 
 MARKER_COLOR, SPAN_COLOR = "#f39c12", "#3498db"  # same as ui/marker.py and ui/interval.py
@@ -43,6 +44,17 @@ def _toggle(text: str, tip: str, color: str | None = None) -> QToolButton:
     return b
 
 
+def _group(*widgets) -> QWidget:
+    """Keep widgets together when the toolbar wraps."""
+    w = QWidget()
+    lay = QHBoxLayout(w)
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(3)
+    for x in widgets:
+        lay.addWidget(x)
+    return w
+
+
 def _spin(cls, lo, hi, step, special=None, decimals=None):
     w = cls()
     w.setRange(lo, hi)
@@ -67,9 +79,8 @@ class VDFControls(QWidget):
         self._silent = False
         self._interval = False
         self._readout = ""
-        bar = QHBoxLayout(self)
+        bar = FlowLayout(self)
         bar.setContentsMargins(4, 2, 4, 2)
-        bar.setSpacing(6)
 
         # selection
         self.marker_btn = _toggle("● Marker", "distribution closest to the orange line", MARKER_COLOR)
@@ -77,15 +88,14 @@ class VDFControls(QWidget):
         self._mode_group = QButtonGroup(self)
         for b in (self.marker_btn, self.interval_btn):
             self._mode_group.addButton(b)
-            bar.addWidget(b)
         self.time_edit = TimeEdit()
-        bar.addWidget(self.time_edit)
+        bar.addWidget(_group(self.marker_btn, self.interval_btn, self.time_edit))
 
         # frame
-        bar.addWidget(QLabel("Frame:"))
         self.frame = QComboBox()
         self.frame.setToolTip("projection frame")
-        bar.addWidget(self.frame)
+        self.frame.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        bar.addWidget(_group(QLabel("Frame:"), self.frame))
         self.bulk = QCheckBox("Bulk frame (v − V_bulk)")
         self.bulk.setToolTip("subtract the bulk velocity")
         bar.addWidget(self.bulk)
@@ -96,15 +106,15 @@ class VDFControls(QWidget):
         self._proj_group = QButtonGroup(self)
         for b in (self.reduced_btn, self.slice_btn):
             self._proj_group.addButton(b)
-            bar.addWidget(b)
+        bar.addWidget(_group(self.reduced_btn, self.slice_btn))
 
         # planes
         self.single_btn = _toggle("1 plane", "show one plane at full size")
         self.plane_choice = QComboBox()
         self.plane_choice.addItems(["plane 1", "plane 2", "plane 3"])
         self.plane_choice.setEnabled(False)
-        bar.addWidget(self.single_btn)
-        bar.addWidget(self.plane_choice)
+        self.plane_choice.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        bar.addWidget(_group(self.single_btn, self.plane_choice))
 
         # settings drop-down
         self.settings_btn = QToolButton()
@@ -116,13 +126,10 @@ class VDFControls(QWidget):
         action.setDefaultWidget(self._build_settings())
         menu.addAction(action)
         self.settings_btn.setMenu(menu)
-        bar.addWidget(self.settings_btn)
-
-        bar.addStretch(1)
         self.close_button = QToolButton()
         self.close_button.setText("×")
         self.close_button.setToolTip("Close VDF viewer")
-        bar.addWidget(self.close_button)
+        bar.addWidget(_group(self.settings_btn, self.close_button))
 
         self._connect()
 

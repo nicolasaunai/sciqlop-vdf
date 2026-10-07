@@ -109,3 +109,15 @@ def test_time_edit_rejects_garbage_and_reverts(qapp):
     assert got["time"] == []
     assert bar.time_edit.text() == "2017-07-11 22:34:02.120 → 22:34:22.120 (N=67)"
     assert "stop must be after start" in bar.time_edit.toolTip()
+
+
+def test_toolbar_wraps_without_overlap_when_narrow(qapp):
+    from PySide6.QtCore import QRect
+    bar, _ = _bar(qapp)
+    lay = bar.layout()
+    assert lay.hasHeightForWidth()
+    assert lay.heightForWidth(500) > lay.heightForWidth(3000)
+    lay.setGeometry(QRect(0, 0, 500, lay.heightForWidth(500)))
+    rects = [lay.itemAt(i).geometry() for i in range(lay.count()) if not lay.itemAt(i).isEmpty()]
+    assert all(r.right() < 500 for r in rects)
+    assert not any(a.intersects(b) for i, a in enumerate(rects) for b in rects[i + 1:])

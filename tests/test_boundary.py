@@ -2,7 +2,7 @@ import ast
 import pathlib
 
 GENERIC = pathlib.Path(__file__).resolve().parents[1] / "sciqlop_vdf"
-CORE_ALLOWED = {"numpy", "scipy", "__future__", "dataclasses", "typing", "warnings", "math", "datetime", "threading", "importlib", "logging"}
+CORE_ALLOWED = {"numpy", "scipy", "__future__", "dataclasses", "typing", "warnings", "math", "datetime", "threading", "importlib", "logging", "re"}
 
 
 def _imports(path):
@@ -21,7 +21,7 @@ def test_generic_never_imports_adapters():
 
 
 def test_core_and_model_are_qt_free():
-    files = [GENERIC / "model.py", GENERIC / "synthetic.py", GENERIC / "registry.py", GENERIC / "ui" / "format.py",
+    files = [GENERIC / "model.py", GENERIC / "synthetic.py", GENERIC / "registry.py", GENERIC / "ui" / "format.py", GENERIC / "ui" / "layout.py",
              *(GENERIC / "core").rglob("*.py")]
     for py in files:
         for mod in _imports(py):

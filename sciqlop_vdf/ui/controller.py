@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QObject, QTimer, Signal
@@ -12,12 +13,13 @@ from ..core.cache import WindowCache
 from ..core.frames import available_frames
 from ..core.pipeline import Options, compute_planes
 from ..model import Cancelled, NoDataError, VDFError
-from .format import fmt_time
 from .controls import VDFControls
+from .dock import VDFDock
+from .format import dock_title, readout, status_computing, status_done
 from .interval import IntervalSpan
 from .marker import SyncedMarker
-from .panel_tools import insert_controls
-from .viewer import VDFViewer
+from .vdf_widget import VDFWidget
+from .viewer import PlaneArea
 
 log = logging.getLogger(__name__)
 DEBOUNCE_MS = 200
@@ -35,13 +37,21 @@ class VDFController:
     def __init__(self, panel, source, options: Options = Options(), t: float | None = None):
         self._panel, self._source, self._options = panel, source, options
         self._cache = WindowCache(source)
-        self._viewer = VDFViewer(panel)
+        self._viewer = PlaneArea()
         self._controls = VDFControls()
         self._controls.set_values(options, "marker")
-        insert_controls(panel, self._controls)
+        self._widget = VDFWidget(self._controls, self._viewer)
+        self._dock = VDFDock(self._widget, dock_title(self._source_label(), panel.name), panel.name)
+        if not self._dock.placed_beside:
+            self._widget.set_status("could not place the viewer beside its panel; opened on the right")
+        self._dock.closed.connect(self.close)
         self._controls.options_changed.connect(lambda d: self.set_options(**d))
         self._controls.mode_changed.connect(self.set_mode)
         self._controls.close_requested.connect(self.close)
+        self._controls.time_edited.connect(self._on_time_edited)
+        self._controls.plane_choice_changed.connect(self._viewer.set_plane_choice)
+        self._t_submit = 0.0
+        self._last_request = (0.0, None)
         if t is None:
             tr = panel.time_range
             t = 0.5 * (tr.start() + tr.stop())
@@ -63,7 +73,20 @@ class VDFController:
         self._schedule()
 
     def _on_panel_destroyed(self, *_):
-        self._shutdown()
+        if self._closed:
+            return
+        self._shutdown()  # never touch the dying panel's children (marker, span)
+        self._dock.close()
+
+    def _source_label(self) -> str:
+        return getattr(self, "label", None) or getattr(self._source, "name", None) or type(self._source).__name__
+
+    def _on_time_edited(self, value) -> None:
+        t0, t1 = value
+        if t1 is None:
+            self.set_marker(t0)
+        else:
+            self.set_interval(t0, t1)
 
     def _shutdown(self) -> None:
         self._closed = True
@@ -80,8 +103,16 @@ class VDFController:
         return self._options
 
     @property
-    def viewer(self) -> VDFViewer:
+    def viewer(self) -> PlaneArea:
         return self._viewer
+
+    @property
+    def widget(self) -> VDFWidget:
+        return self._widget
+
+    @property
+    def dock(self) -> VDFDock:
+        return self._dock
 
     @on_main_thread
     def set_mode(self, mode: str) -> None:
@@ -122,8 +153,7 @@ class VDFController:
         if self._span is not None:
             self._span.remove()
             self._span = None
-        self._controls.deleteLater()
-        self._viewer.dispose()
+        self._dock.close()
 
     def _request(self) -> tuple[float, float | None]:
         if self._mode == "interval" and self._span is not None:
@@ -140,8 +170,10 @@ class VDFController:
         self._gen += 1
         gen = self._gen
         t0, t1 = self._request()
-        when = fmt_time(t0) if t1 is None else f"{fmt_time(t0)}–{fmt_time(t1)[11:]}"
-        self._viewer.message(f"computing … {when}")
+        self._t_submit = time.monotonic()
+        self._last_request = (t0, t1)
+        self._controls.set_readout(readout(t0, t1))
+        self._widget.set_status(status_computing(t0, t1))
         self._pool.submit(self._work, gen, t0, t1, self._options)
 
     def _work(self, gen: int, t0: float, t1: float | None, options: Options) -> None:
@@ -171,20 +203,24 @@ class VDFController:
         planes, frames = payload
         self._controls.set_frames(frames, self._options.frame)
         self._controls.set_axes(planes.axes)
+        t0, t1 = self._last_request
         try:
-            self._viewer.show(planes)
-        except Exception as e:  # never leave the "computing …" titles behind
+            self._viewer.display(planes, self._options.display_decades)
+        except Exception as e:  # never leave "computing …" behind
             log.exception("VDF display failed")
-            self._viewer.message(f"display error: {type(e).__name__}: {e}")
+            self._widget.set_status(f"display error: {type(e).__name__}: {e}", error=True)
+            return
+        self._controls.set_readout(readout(t0, t1, planes.n_used if t1 is not None else None))
+        self._widget.set_status(status_done(planes.n_used, time.monotonic() - self._t_submit))
 
     def _on_failed(self, gen: int, message: str, clear: bool) -> None:
         if gen == self._gen and not self._closed:
             if clear:
                 self._viewer.clear()
-            self._viewer.message(message)
+            self._widget.set_status(message, error=not clear)
 
 
 @on_main_thread
 def attach(panel, source, options: Options = Options(), t: float | None = None) -> VDFController:
-    """Add a VDF viewer row below the panel's plots, with a marker at t (default: panel centre)."""
+    """Open a VDF viewer dock beside the panel, with a marker at t (default: panel centre)."""
     return VDFController(panel, source, options, t)
