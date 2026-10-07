@@ -31,6 +31,7 @@ class Options:
     max_gap: float | None = None  # s; for single-time selection
     one_count_mask: bool = False  # hide cells below the one-count level
     slice_point: tuple[float, float, float] = (0.0, 0.0, 0.0)  # km/s, frame axes (bulk-relative in bulk frame)
+    display_decades: float = 4.0  # colour range below the max (display only; not used by compute_planes)
 
 
 @dataclass(frozen=True)
