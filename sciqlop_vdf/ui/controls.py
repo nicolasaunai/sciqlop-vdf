@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox,
                                QHBoxLayout, QLabel, QLineEdit, QMenu, QSpinBox, QToolButton, QVBoxLayout,
                                QWidget, QWidgetAction)
@@ -21,13 +21,22 @@ class TimeEdit(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
+        self.start_text = ""
         self.setMinimumWidth(self.fontMetrics().horizontalAdvance("0000-00-00 00:00:00.000 → 00:00:00.000 (N=000)"))
         self.setToolTip("double-click to type a time (marker) or 'start → stop' (interval)")
 
     def begin_edit(self) -> None:
+        self.start_text = self.text()
         self.setReadOnly(False)
         self.selectAll()
         self.setFocus()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape and not self.isReadOnly():
+            self.setText(self.start_text)  # unchanged text → owner treats it as cancelled
+            self.clearFocus()
+            return
+        super().keyPressEvent(event)
 
     def mouseDoubleClickEvent(self, event):
         self.begin_edit()
@@ -214,6 +223,10 @@ class VDFControls(QWidget):
 
     def _on_time_edited(self) -> None:
         if self.time_edit.isReadOnly():
+            return
+        if self.time_edit.text() == self.time_edit.start_text:  # nothing typed, or Escape: show the latest
+            self.time_edit.setText(self._readout)
+            self.time_edit.setReadOnly(True)
             return
         try:
             value = parse_readout(self.time_edit.text(), interval=self._interval)

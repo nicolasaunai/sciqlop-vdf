@@ -22,7 +22,7 @@ from . import layout
 from .format import plane_title
 
 COLORBAR_PLANE = 2  # the plane that shows the shared colour bar in three-plane mode
-GAP = 4  # px between planes
+GAP = layout.GAP  # px between planes
 
 
 class PlaneArea(QWidget):

@@ -121,3 +121,30 @@ def test_toolbar_wraps_without_overlap_when_narrow(qapp):
     rects = [lay.itemAt(i).geometry() for i in range(lay.count()) if not lay.itemAt(i).isEmpty()]
     assert all(r.right() < 500 for r in rects)
     assert not any(a.intersects(b) for i, a in enumerate(rects) for b in rects[i + 1:])
+
+
+def test_time_edit_unmodified_focus_out_emits_nothing(qapp):
+    bar, got = _bar(qapp)
+    bar.set_values(Options(), "marker")
+    bar.set_readout("2017-07-11 22:34:02.120")
+    bar.time_edit.begin_edit()
+    bar.set_readout("2017-07-11 22:34:09.000")  # marker dragged meanwhile
+    bar.time_edit.editingFinished.emit()         # focus leaves without typing
+    assert got["time"] == []
+    assert bar.time_edit.isReadOnly() and bar.time_edit.text() == "2017-07-11 22:34:09.000"
+
+
+def test_time_edit_escape_cancels(qapp):
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtCore import QEvent
+    bar, got = _bar(qapp)
+    bar.set_values(Options(), "marker")
+    bar.set_readout("2017-07-11 22:34:02.120")
+    bar.time_edit.begin_edit()
+    bar.time_edit.setText("2017-07-11 22:35:00")
+    bar.time_edit.setModified(True)
+    bar.time_edit.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier))
+    bar.time_edit.editingFinished.emit()
+    assert got["time"] == []
+    assert bar.time_edit.isReadOnly() and bar.time_edit.text() == "2017-07-11 22:34:02.120"

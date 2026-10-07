@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 
 import PySide6QtAds as QtAds
 from PySide6.QtCore import QObject, QTimer, Signal
@@ -16,11 +17,13 @@ class VDFDock(QObject):
     """GUI thread only. `closed` fires when the user clicks the dock's × (not on close())."""
     closed = Signal()
 
-    def __init__(self, widget, title: str, beside: str | None):
+    def __init__(self, widget, title: str, beside: str | None, manager=None):
         super().__init__()
-        self._mgr = unwrap(get_main_window()).dock_manager
+        self._mgr = manager if manager is not None else unwrap(get_main_window()).dock_manager
         self._done = False
         self._doc = QtAds.CDockWidget(title)
+        self._doc.setObjectName(f"vdf-{uuid.uuid4().hex}")  # QtAds keys docks by object name (= title)
+        widget.destroyed.connect(self._on_content_destroyed)
         self._doc.setWidget(widget, QtAds.CDockWidget.ForceNoScrollArea)
         self._doc.setFeature(QtAds.CDockWidget.CustomCloseHandling, True)
         self._doc.setFeature(QtAds.CDockWidget.DockWidgetDeleteOnClose, True)
@@ -33,6 +36,12 @@ class VDFDock(QObject):
             QTimer.singleShot(0, lambda: self._split(area))
         else:
             self._mgr.addDockWidget(QtAds.DockWidgetArea.RightDockWidgetArea, self._doc)
+
+    def _on_content_destroyed(self, *_):
+        """Content deleted by someone else (QtAds/SciQLop teardown): report it like a user close."""
+        if not self._done:
+            self._done = True
+            self.closed.emit()
 
     def _split(self, area) -> None:
         if self._done:

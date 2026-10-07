@@ -6,6 +6,7 @@ import numpy as np
 ROW, COLUMN, L, SINGLE = "row", "column", "L", "single"
 MIN_SIDE = 80     # px; a plane is never drawn smaller
 COLORBAR_PX = 70  # px reserved for the one visible colour bar
+GAP = 4           # px between planes
 
 _GRID = {ROW: (1, 3), COLUMN: (3, 1), L: (2, 2), SINGLE: (1, 1)}
 _POSITIONS = {
@@ -16,21 +17,22 @@ _POSITIONS = {
 }
 
 
-def _raw_side(arr: str, width: int, height: int, extra_w: int) -> float:
+def _raw_side(arr: str, width: int, height: int, extra_w: int, gap: int) -> float:
     rows, cols = _GRID[arr]
-    return min((width - extra_w) / cols, height / rows)
+    return min((width - extra_w - (cols - 1) * gap) / cols, (height - (rows - 1) * gap) / rows)
 
 
-def side(arr: str, width: int, height: int, extra_w: int = COLORBAR_PX) -> int:
-    """Largest square plane side for this arrangement inside width x height (clamped to MIN_SIDE)."""
-    return max(int(_raw_side(arr, width, height, extra_w)), MIN_SIDE)
+def side(arr: str, width: int, height: int, extra_w: int = COLORBAR_PX, gap: int = GAP) -> int:
+    """Largest square plane side for this arrangement inside width x height, gaps and colour bar included
+    (clamped to MIN_SIDE)."""
+    return max(int(_raw_side(arr, width, height, extra_w, gap)), MIN_SIDE)
 
 
-def arrangement(width: int, height: int, extra_w: int = COLORBAR_PX) -> str:
+def arrangement(width: int, height: int, extra_w: int = COLORBAR_PX, gap: int = GAP) -> str:
     """ROW, COLUMN or L: whichever gives the largest planes (ties: ROW, then L, then COLUMN)."""
     best, best_side = ROW, float("-inf")
     for arr in (ROW, L, COLUMN):
-        s = _raw_side(arr, width, height, extra_w)
+        s = _raw_side(arr, width, height, extra_w, gap)
         if s > best_side:
             best, best_side = arr, s
     return best

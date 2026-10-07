@@ -6,18 +6,18 @@ from sciqlop_vdf.ui.layout import (COLUMN, L, MIN_SIDE, ROW, SINGLE, arrangement
 
 @pytest.mark.parametrize("w,h,expected", [(900, 300, ROW), (300, 900, COLUMN), (600, 600, L)])
 def test_arrangement_follows_aspect(w, h, expected):
-    assert arrangement(w, h, extra_w=0) == expected
+    assert arrangement(w, h, extra_w=0, gap=0) == expected
 
 
 def test_side_fits_the_box():
-    assert side(ROW, 900, 300, extra_w=0) == 300
-    assert side(L, 600, 600, extra_w=0) == 300
-    assert side(COLUMN, 300, 900, extra_w=0) == 300
-    assert side(SINGLE, 500, 400, extra_w=0) == 400
+    assert side(ROW, 900, 300, extra_w=0, gap=0) == 300
+    assert side(L, 600, 600, extra_w=0, gap=0) == 300
+    assert side(COLUMN, 300, 900, extra_w=0, gap=0) == 300
+    assert side(SINGLE, 500, 400, extra_w=0, gap=0) == 400
 
 
 def test_colorbar_width_is_reserved():
-    assert side(ROW, 970, 400, extra_w=70) == 300
+    assert side(ROW, 970, 400, extra_w=70, gap=0) == 300
 
 
 @pytest.mark.parametrize("w,h", [(0, 0), (-5, 10), (10, -5), (1, 1)])
@@ -51,3 +51,11 @@ def test_mask_outside():
     assert np.isnan(out[0, 0]) and np.isnan(out[1, 0]) and out[0, 1] == 1e-10 and out[1, 1] == 1e-8
     assert np.isnan(mask_outside(z, None)).all()
     assert z[0, 0] == 1e-13  # input untouched
+
+
+def test_gaps_between_planes_are_reserved():
+    # 3 planes + 2 gaps of 4 px + colour bar must fit in the width; 2 gaps in a column must fit in the height
+    s = side(ROW, 970, 400, extra_w=70, gap=4)
+    assert 3 * s + 2 * 4 + 70 <= 970
+    s = side(COLUMN, 300, 900, extra_w=0, gap=4)
+    assert 3 * s + 2 * 4 <= 900
