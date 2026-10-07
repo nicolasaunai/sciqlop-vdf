@@ -1,6 +1,6 @@
 # sciqlop-vdf — dockable viewer UI (design)
 
-Date: 2026-10-07. Status: approved in conversation, pending written-spec review.
+Date: 2026-10-07. Status: implemented 2026-10-07 on branch `dock-ui`.
 
 ## 1. Problem
 

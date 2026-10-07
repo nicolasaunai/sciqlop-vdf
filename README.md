@@ -2,8 +2,8 @@
 
 Velocity distribution function (VDF) viewer for [SciQLop](https://github.com/SciQLop/SciQLop).
 
-It adds a **VDF ▾** button to every plot panel. Pick a source, and a row of three 2-D velocity-space planes
-(reduced or sliced, with contours) appears under the panel, following a draggable time marker or averaged
+It adds a **VDF ▾** button to every plot panel. Pick a source, and a dock with three 2-D velocity-space planes
+(reduced or sliced, with contours) opens beside the panel, following a draggable time marker or averaged
 over a draggable interval. Frames: instrument native, any frame the source provides (GSE, RTN, …), and
 field-aligned, optionally in the plasma bulk frame.
 
@@ -63,9 +63,13 @@ SciQLop plugins are installed **per workspace**: each workspace has its own Pyth
 ## Quick start
 
 * **Interactive:** plot any product on a panel, click **VDF ▾**, pick a source. An orange marker appears at the
-  panel centre: drag it to step through distributions; the control bar above the time axis switches
-  marker ↔ interval (averaging over a draggable blue span), frame (native / RTN or GSE / field-aligned), bulk
-  frame, reduced ↔ slice, grid, |v|max and contours; **×** removes the viewer.
+  panel centre: drag it to step through distributions. The viewer is its own dock (default: right of the
+  panel, 40 % of the width): drag its tab to resize, move, tab or float it. Its toolbar switches marker ↔
+  interval (averaging over a draggable blue span), frame (native / RTN or GSE / field-aligned), bulk frame,
+  reduced ↔ slice, and one plane ↔ three; double-click the time readout to type a time or `start → stop`;
+  **⚙** holds the slice point and thickness, grid, |v|max, contours, colour range and the one-count mask.
+  Planes stay square and rearrange (row / column / L) with the dock's shape; one colour bar is shared by the
+  three planes. Status and errors show at the bottom of the dock; **×** removes the viewer.
 * **Worked example:** run [`notebooks/solo_2025-02-28_event.ipynb`](notebooks/solo_2025-02-28_event.ipynb) top to
   bottom (needs ~3 GB of free memory for the Solar Orbiter distributions).
 
